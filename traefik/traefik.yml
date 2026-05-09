@@ -3,7 +3,6 @@ global:
 
 api:
   dashboard: true
-  debug: true
 
 entryPoints:
   web:
