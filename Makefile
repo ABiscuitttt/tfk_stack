@@ -14,10 +14,15 @@
 # 仓库本身只跟踪 infra/ 和 services/_template/，业务服务由本机自行放置。
 # ============================================================
 
-# SERVICES = infra/* + services/* （排除 _template）
-INFRA    := $(wildcard infra/*)
-SERVICES := $(INFRA) $(filter-out services/_template,$(wildcard services/*))
-COMPOSE  := docker compose
+# 启停顺序：traefik 最先起、最后停（其他服务依赖它的网络与路由）
+# up:   traefik → 其他 infra → services
+# down: services → 其他 infra → traefik
+TRAEFIK     := infra/traefik
+INFRA_REST  := $(filter-out $(TRAEFIK),$(wildcard infra/*))
+SVC_USER    := $(filter-out services/_template,$(wildcard services/*))
+SERVICES    := $(TRAEFIK) $(INFRA_REST) $(SVC_USER)
+SERVICES_REV = $(shell printf '%s\n' $(SERVICES) | tac)
+COMPOSE     := docker compose
 
 .PHONY: up down restart pull ps logs help
 
@@ -28,7 +33,7 @@ up:
 	done
 
 down:
-	@for s in $(SERVICES); do \
+	@for s in $(SERVICES_REV); do \
 		echo ">> down $$s"; \
 		$(COMPOSE) -f $$s/docker-compose.yml down; \
 	done
