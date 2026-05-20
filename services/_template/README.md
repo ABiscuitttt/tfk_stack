@@ -25,7 +25,7 @@
 
 - `make up/down/restart/pull` 自动作用于 `infra/*` 与 `services/*`（除 `_template`）
 - `services/<name>/` 整体被 `.gitignore` 屏蔽，不会污染 git
-- `**/.env`、`config.json`、`credentials.json`、运行时数据目录已在全局 `.gitignore` 屏蔽
+- `**/.env`、运行时数据、密钥等：因为 `services/<name>/` 整体屏蔽，里面所有内容都不会入库
 
 ## 镜像版本约定
 

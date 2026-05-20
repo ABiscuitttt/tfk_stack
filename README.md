@@ -58,9 +58,8 @@ make pull
 
 ## 不会被提交的内容（见 .gitignore）
 
-- 运行时数据：`**/trilium-data/`、`**/portainer_data/`、`**/letsencrypt/`、`**/acme.json`
-- 密钥：`credentials.json`、`config.json`（保留 `config.example.json`）、`*.pem`、`*.key`
-- 环境变量真实值：`**/.env`（infra 下的 `.env` 例外，会入库）
+- 整个 `services/<name>/`（除 `_template`）— 业务服务的 compose、配置、运行时数据、密钥统统在这层一并屏蔽
+- `**/.env`（`infra/` 下的 `.env` 例外，入库以锁定版本）
 - 个人 IDE 配置：`.claude/settings.local.json`、`.vscode/`、`.idea/`
 
 ## Traefik 关键配置
