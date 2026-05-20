@@ -1,0 +1,34 @@
+####################################################################
+# 新服务接入模板
+#
+# 使用方式：参见 services/_template/README.md
+#
+# 前置条件：
+#   - Traefik 已启动（infra/traefik）
+#   - traefik-net 网络已存在
+####################################################################
+
+services:
+  myapp:
+    image: myapp:${MYAPP_TAG:-latest}
+    container_name: myapp
+    restart: unless-stopped
+    networks:
+      - traefik-net
+    labels:
+      ## --- 必填 ---
+      - "traefik.enable=true"
+      - "traefik.http.routers.myapp.rule=Host(`myapp.localhost`)"
+      - "traefik.http.routers.myapp.entrypoints=web"
+
+      ## --- 可选 ---
+      # 容器暴露多个端口时手动指定
+      # - "traefik.http.services.myapp.loadbalancer.server.port=8080"
+
+      # 后端自带 HTTPS（traefik 已全局 insecureSkipVerify）
+      # - "traefik.http.services.myapp.loadbalancer.server.scheme=https"
+
+networks:
+  traefik-net:
+    external: true
+    name: traefik-net

@@ -1,0 +1,46 @@
+# ============================================================
+# Stacks 仓库忽略规则
+#
+# 设计原则：
+#   - main 分支只跟踪 infra/（traefik、portainer）和 services/_template/
+#   - 业务服务目录默认全部忽略，由各 service/<name> 分支用 ! 反向放开
+#   - 任何分支都不得提交：运行时数据、密钥、个人 IDE 配置
+# ============================================================
+
+# --- 业务服务目录（默认全部忽略，service 分支取消屏蔽）---
+/services/*
+!/services/_template/
+
+# 旧位置（重构前遗留，相关分支会 mv 至 services/<name>/）
+/kirors/
+/trilium/
+
+# --- 运行时数据（容器持久化目录）---
+**/trilium-data/
+**/portainer_data/
+**/letsencrypt/
+**/acme.json
+**/data/
+**/db/
+
+# --- 密钥与凭证 ---
+**/credentials.json
+**/config.json
+!**/config.example.json
+**/kiro_stats.json
+*.pem
+*.key
+secrets/
+
+# --- 环境变量真实值 ---
+.env
+**/.env
+!**/.env.example
+
+# --- 个人 IDE / 编辑器配置 ---
+.claude/settings.local.json
+**/.claude/settings.local.json
+.vscode/
+.idea/
+*.swp
+.DS_Store

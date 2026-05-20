@@ -1,8 +1,8 @@
 services:
   portainer:
     container_name: portainer
-    image: portainer/portainer-ce:sts
-    restart: always
+    image: portainer/portainer-ce:${PORTAINER_TAG:-sts}
+    restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
