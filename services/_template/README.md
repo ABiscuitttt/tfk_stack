@@ -1,48 +1,32 @@
 # 新服务接入模板
 
+业务服务不入库，本机直接放就行。
+
 ## 步骤
 
-1. **新建分支**
+1. **复制模板**
 
    ```bash
-   git checkout -b service/<name> main
+   cp -r services/_template services/<name>
    ```
 
-2. **复制模板**
+2. **改 compose**：把所有 `myapp` 替换为服务名，修改 `image` 和 `Host(...)` 规则
+
+3. **如需固定镜像版本**：编辑 `services/<name>/.env`，写入对应的 `<NAME>_TAG`
+
+4. **启动**
 
    ```bash
-   mkdir -p services/<name>
-   cp services/_template/docker-compose.yml services/<name>/docker-compose.yml
-   ```
-
-3. **改 compose**：将所有 `myapp` 替换为服务名，修改 image 与 Host 规则
-
-4. **放开 .gitignore**：在 `.gitignore` 末尾追加一行
-
-   ```
-   !/services/<name>/
-   ```
-
-5. **加入 Makefile**：编辑根目录 `Makefile`，把 `services/<name>` 加到 `SERVICES` 变量
-
-6. **如有可调环境变量**：新建 `services/<name>/.env.example`，列出可用的 `*_TAG` 等
-
-7. **如有运行时数据目录**（数据库文件、上传等）：在根 `.gitignore` 添加对应规则
-
-8. **启动并验证**
-
-   ```bash
-   make up
+   make up                       # 自动发现新服务并启动
    curl -H "Host: <name>.localhost" http://localhost
    ```
 
-9. **提交**
+## 默认行为
 
-   ```bash
-   git add .
-   git commit -m "feat(<name>): integrate into services/"
-   ```
+- `make up/down/restart/pull` 自动作用于 `infra/*` 与 `services/*`（除 `_template`）
+- `services/<name>/` 整体被 `.gitignore` 屏蔽，不会污染 git
+- `**/.env`、`config.json`、`credentials.json`、运行时数据目录已在全局 `.gitignore` 屏蔽
 
 ## 镜像版本约定
 
-统一使用 `image: <name>:${<NAME>_TAG:-latest}`，便于通过 `.env` 锁定版本。
+`image: <name>:${<NAME>_TAG:-latest}`。需要锁定版本时复制 `.env.example` 为 `.env`。

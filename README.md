@@ -16,17 +16,16 @@ stacks/
     └── _template/       # 新服务接入模板
 ```
 
-## 分支策略
+## 仓库跟踪范围
 
-- **main**：仅基础设施（infra/）+ 模板（services/_template/）
-- **service/&lt;name&gt;**：单个业务服务（如 `service/trilium`、`service/kirors`），从 main 切出，仅在自己分支放开 `services/<name>/`
+仓库只跟踪基础设施（`infra/`）与模板（`services/_template/`）。`services/` 下的真实业务服务**不入库**——你在本机按需 `cp services/_template/ services/<name>/` 放进去就行。
 
-操作某个业务服务时切到对应分支。多服务并存可用 git worktree。
+`Makefile` 会自动发现 `infra/*` 与 `services/*`（排除 `_template`）下的 compose 目录，无需手动登记。
 
 ## 快速开始
 
 ```bash
-# 启动 main 分支基础设施（traefik + portainer）
+# 启动本机所有服务（infra + services 下所有非 _template 目录）
 make up
 
 # 查看某服务日志

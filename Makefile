@@ -10,11 +10,13 @@
 #   make logs S=<dir>    跟随某个服务日志
 #   make help            显示此帮助
 #
-# SERVICES 列出本分支启用的所有 docker-compose 项目目录。
-# 业务服务分支（service/*）会在自己的 Makefile 里追加自身。
+# SERVICES 自动发现 infra/* 与 services/*（除 _template 模板）。
+# 仓库本身只跟踪 infra/ 和 services/_template/，业务服务由本机自行放置。
 # ============================================================
 
-SERVICES := infra/traefik infra/portainer
+# SERVICES = infra/* + services/* （排除 _template）
+INFRA    := $(wildcard infra/*)
+SERVICES := $(INFRA) $(filter-out services/_template,$(wildcard services/*))
 COMPOSE  := docker compose
 
 .PHONY: up down restart pull ps logs help
