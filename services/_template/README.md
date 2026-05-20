@@ -29,4 +29,4 @@
 
 ## 镜像版本约定
 
-`image: <name>:${<NAME>_TAG:-latest}`。需要锁定版本时复制 `.env.example` 为 `.env`。
+`image: <name>:${<NAME>_TAG:-latest}`。锁定版本：在 `services/<name>/.env` 写 `<NAME>_TAG=具体版本`。该 .env 不入库，仅本机生效。

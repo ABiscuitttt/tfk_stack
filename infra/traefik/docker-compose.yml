@@ -6,7 +6,7 @@ networks:
 
 services:
   traefik:
-    image: traefik:${TRAEFIK_TAG:-v3.7}
+    image: traefik:${TRAEFIK_TAG:-v3.7.0}
     container_name: traefik
     restart: unless-stopped
     security_opt:

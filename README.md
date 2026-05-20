@@ -6,12 +6,11 @@
 
 ```
 stacks/
-├── .env.example
 ├── .gitignore
 ├── Makefile
 ├── infra/
-│   ├── traefik/         # 反向代理 + Dashboard
-│   └── portainer/       # 容器管理面板
+│   ├── traefik/         # 反向代理 + Dashboard（含 .env 锁定版本）
+│   └── portainer/       # 容器管理面板（含 .env 锁定版本）
 └── services/
     └── _template/       # 新服务接入模板
 ```
@@ -48,12 +47,10 @@ make pull
 
 ## 镜像版本
 
-所有 compose 使用 `image: <name>:${<NAME>_TAG:-默认值}` 形式。复制 `.env.example` 为 `.env` 锁定版本：
+所有 compose 使用 `image: <name>:${<NAME>_TAG:-默认值}` 形式。
 
-```bash
-cp .env.example .env
-# 编辑 .env，例如 TRAEFIK_TAG=v3.7
-```
+- **infra 服务**（traefik、portainer）：版本锁在 `infra/<name>/.env`，**入库**，所有人拿到一致版本。
+- **业务服务**（services/&lt;name&gt;）：版本锁在 `services/<name>/.env`，**不入库**，本机自管。
 
 ## 添加新服务
 
@@ -63,7 +60,7 @@ cp .env.example .env
 
 - 运行时数据：`**/trilium-data/`、`**/portainer_data/`、`**/letsencrypt/`、`**/acme.json`
 - 密钥：`credentials.json`、`config.json`（保留 `config.example.json`）、`*.pem`、`*.key`
-- 环境变量真实值：`.env`（保留 `.env.example`）
+- 环境变量真实值：`**/.env`（infra 下的 `.env` 例外，会入库）
 - 个人 IDE 配置：`.claude/settings.local.json`、`.vscode/`、`.idea/`
 
 ## Traefik 关键配置
