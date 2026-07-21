@@ -7,7 +7,7 @@
 ```
 stacks/
 ├── .gitignore
-├── Makefile
+├── stacks.py            # uv 单文件脚本，统一启停入口
 ├── infra/
 │   ├── traefik/         # 反向代理 + Dashboard（含 .env 锁定版本）
 │   └── portainer/       # 容器管理面板（含 .env 锁定版本）
@@ -19,25 +19,45 @@ stacks/
 
 仓库只跟踪基础设施（`infra/`）与模板（`services/_template/`）。`services/` 下的真实业务服务**不入库**——你在本机按需 `cp services/_template/ services/<name>/` 放进去就行。
 
-`Makefile` 会自动发现 `infra/*` 与 `services/*`（排除 `_template`）下的 compose 目录，无需手动登记。
+`stacks.py` 会自动发现 `infra/*` 与 `services/*`（排除 `_template`）下的 compose 目录，无需手动登记。
+
+## 依赖
+
+- Docker（含 `docker compose` v2）
+- [uv](https://docs.astral.sh/uv/)（脚本首行 `#!/usr/bin/env -S uv run --script`，无需额外安装 Python 依赖）
 
 ## 快速开始
 
+脚本已 `chmod +x`，可直接 `./stacks.py <cmd>`，等价 `uv run stacks.py <cmd>`。
+
 ```bash
-# 启动本机所有服务（infra + services 下所有非 _template 目录）
-make up
+# 启动本机所有服务（infra + services 下所有非 _template 目录，traefik 优先）
+./stacks.py up
 
-# 查看某服务日志
-make logs S=infra/traefik
+# 只启单个（或几个）服务
+./stacks.py up services/hermes
+./stacks.py up services/hermes services/trilium
 
-# 查看某服务状态
-make ps S=infra/portainer
+# 停止全部（反序，traefik 最后停）
+./stacks.py down
 
-# 停止全部
-make down
+# 只停某几个
+./stacks.py down services/hermes
 
-# 拉取镜像更新
-make pull
+# 先 down 再 up（可带服务参数）
+./stacks.py restart
+./stacks.py restart services/hermes
+
+# 拉取镜像
+./stacks.py pull
+./stacks.py pull services/hermes
+
+# 单服务状态 / 日志
+./stacks.py ps infra/traefik
+./stacks.py logs infra/traefik
+
+# 帮助
+./stacks.py -h
 ```
 
 启动后访问：
