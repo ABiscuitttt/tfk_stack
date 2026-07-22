@@ -1,0 +1,19 @@
+networks:
+  sandbox-net:
+    name: sandbox-net
+    driver: bridge
+    external: false
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16
+    driver_opts:
+      com.docker.network.bridge.name: lab0
+
+services:
+  anchor:
+    image: busybox:${BUSYBOX_TAG:-1.37.0}
+    container_name: sandbox-net-anchor
+    restart: unless-stopped
+    command: ["sh", "-c", "sleep infinity"]
+    networks:
+      - sandbox-net

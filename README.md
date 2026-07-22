@@ -9,8 +9,10 @@ stacks/
 ├── .gitignore
 ├── stacks.py            # uv 单文件脚本，统一启停入口
 ├── infra/
+│   ├── traefik-net/     # 反代主网络（生命周期独立）
 │   ├── traefik/         # 反向代理 + Dashboard（含 .env 锁定版本）
-│   └── portainer/       # 容器管理面板（含 .env 锁定版本）
+│   ├── portainer/       # 容器管理面板（含 .env 锁定版本）
+│   └── sandbox-net/     # 隔离的测试用 bridge 网络（172.30.0.0/16）
 └── services/
     └── _template/       # 新服务接入模板
 ```
@@ -56,9 +58,14 @@ stacks/
 ./stacks.py ps infra/traefik
 ./stacks.py logs infra/traefik
 
+# 环境自检（docker/compose 版本、80 端口、*.localhost 解析、网络、stack 清单）
+./stacks.py doctor
+
 # 帮助
 ./stacks.py -h
 ```
+
+启动顺序：`infra/*-net` → `infra/traefik` → 其他 `infra/*` → `services/*`；`down` 反序。
 
 启动后访问：
 
@@ -86,5 +93,27 @@ stacks/
 
 - 入口：`:80` (HTTP)
 - Docker provider：`exposedByDefault=false`，需 `traefik.enable=true` 才暴露
-- 网络：`traefik-net`（由 traefik compose 创建，business 服务以 external 方式接入）
+- 网络：`traefik-net`（由 `infra/traefik-net` 独立管理，traefik / portainer / 业务服务都以 external 方式接入）
 - `insecureSkipVerify=true`：允许后端自签 TLS（如 Portainer 的 9443）
+
+## 网络分层
+
+网络生命周期从服务里剥离，两张 bridge 网络各由一个 stack 管理，附一个 busybox anchor 容器占位保证 `stacks up` 时网络真的会被创建。
+
+| stack | 网络 | 子网 | 用途 |
+| --- | --- | --- | --- |
+| `infra/traefik-net` | `traefik-net` | Docker 默认 | 反代主网络，traefik / portainer / 业务服务接入 |
+| `infra/sandbox-net` | `sandbox-net` | `172.30.0.0/16`（桥 `lab0`） | 临时测试、隔离环境，跟主网络无交叉 |
+
+引用方式（业务或测试 compose 里）：
+
+```yaml
+networks:
+  default:
+    name: traefik-net   # 或 sandbox-net
+    external: true
+```
+
+## 容器访问宿主机
+
+业务服务模板已带 `extra_hosts: host.docker.internal:host-gateway`，容器内 `host.docker.internal` 会解析到宿主机（对齐 Docker Desktop 行为）。infra 侧默认不开，需要时同样加两行即可。

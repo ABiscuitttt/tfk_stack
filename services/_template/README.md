@@ -12,18 +12,22 @@
 
 2. **改 compose**：把所有 `myapp` 替换为服务名，修改 `image` 和 `Host(...)` 规则
 
-3. **如需固定镜像版本**：编辑 `services/<name>/.env`，写入对应的 `<NAME>_TAG`
+3. **准备 .env**：`cp services/<name>/.env.example services/<name>/.env`，改 `<NAME>_TAG` 等本机变量
 
 4. **启动**
 
    ```bash
-   make up                       # 自动发现新服务并启动
+   ./stacks.py up services/<name>
    curl -H "Host: <name>.localhost" http://localhost
    ```
 
+## 容器内访问宿主机
+
+模板已带 `extra_hosts: host.docker.internal:host-gateway`，容器里 `host.docker.internal` 就能解析到宿主机（对齐 Docker Desktop 行为）。不需要就删掉那两行。
+
 ## 默认行为
 
-- `make up/down/restart/pull` 自动作用于 `infra/*` 与 `services/*`（除 `_template`）
+- `./stacks.py up/down/restart/pull` 自动作用于 `infra/*` 与 `services/*`（除 `_template`）
 - `services/<name>/` 整体被 `.gitignore` 屏蔽，不会污染 git
 - `**/.env`、运行时数据、密钥等：因为 `services/<name>/` 整体屏蔽，里面所有内容都不会入库
 

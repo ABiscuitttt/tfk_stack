@@ -15,6 +15,9 @@ services:
     restart: unless-stopped
     networks:
       - traefik-net
+    # 让容器内可用 host.docker.internal 访问宿主机（对齐 Docker Desktop 行为）
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     labels:
       ## --- 必填 ---
       - "traefik.enable=true"

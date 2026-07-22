@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import argparse
+import socket
 import subprocess
 import sys
 from pathlib import Path
@@ -25,7 +26,11 @@ COMPOSE_FILE = "docker-compose.yml"
 
 
 def discover_services() -> list[str]:
-    """按启动顺序返回所有服务相对路径：traefik → 其他 infra → services（排除 _template）。"""
+    """按启动顺序返回所有服务相对路径。
+
+    顺序：infra 里 `*-net` 结尾的网络 stack → traefik → 其他 infra → services（排除 _template）。
+    down 时由调用方反转，网络 stack 最后停。
+    """
 
     def compose_dirs(parent: str) -> list[str]:
         base = ROOT / parent
@@ -40,10 +45,14 @@ def discover_services() -> list[str]:
     infra_all = compose_dirs("infra")
     services_all = [s for s in compose_dirs("services") if not s.endswith("/_template")]
 
+    nets = [s for s in infra_all if s.endswith("-net")]
+    other_infra = [s for s in infra_all if s not in nets and s != TRAEFIK]
+
     ordered: list[str] = []
+    ordered.extend(nets)
     if TRAEFIK in infra_all:
         ordered.append(TRAEFIK)
-    ordered.extend(s for s in infra_all if s != TRAEFIK)
+    ordered.extend(other_infra)
     ordered.extend(services_all)
     return ordered
 
@@ -119,6 +128,79 @@ def cmd_logs(args: argparse.Namespace) -> int:
     return run_compose(svc, ["logs", "-f", "--tail=200"])
 
 
+def _check(label: str, ok: bool, detail: str = "") -> bool:
+    mark = "✓" if ok else "✗"
+    line = f"  {mark} {label}"
+    if detail:
+        line += f" — {detail}"
+    print(line)
+    return ok
+
+
+def _run(cmd: list[str]) -> tuple[int, str]:
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        return r.returncode, (r.stdout + r.stderr).strip()
+    except FileNotFoundError:
+        return 127, f"{cmd[0]} not found"
+    except subprocess.TimeoutExpired:
+        return 124, "timeout"
+
+
+def _port_free(port: int) -> tuple[bool, str]:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.5)
+        try:
+            s.bind(("0.0.0.0", port))
+            return True, "空闲"
+        except OSError as e:
+            return False, f"已占用（{e.strerror}）"
+
+
+def _docker_network_exists(name: str) -> bool:
+    rc, out = _run(["docker", "network", "inspect", name, "--format", "{{.Name}}"])
+    return rc == 0 and out == name
+
+
+def cmd_doctor(_: argparse.Namespace) -> int:
+    print("== docker / compose ==")
+    rc_d, out_d = _run(["docker", "version", "--format", "{{.Server.Version}}"])
+    ok_docker = _check("docker daemon", rc_d == 0, out_d if rc_d == 0 else out_d or "无法连接 daemon")
+    rc_c, out_c = _run(["docker", "compose", "version", "--short"])
+    _check("docker compose v2", rc_c == 0, out_c)
+
+    print("== 端口 ==")
+    ok80, detail80 = _port_free(80)
+    # traefik 已经起在 80 属于正常场景，做个区分
+    if not ok80:
+        rc_ps, out_ps = _run(["docker", "ps", "--filter", "name=^traefik$", "--format", "{{.Names}}"])
+        if rc_ps == 0 and out_ps.strip() == "traefik":
+            detail80 = "被 traefik 容器占用（正常）"
+            ok80 = True
+    _check("宿主 80 端口", ok80, detail80)
+
+    print("== *.localhost 解析 ==")
+    ok_dns = True
+    for host in ("traefik.localhost", "portainer.localhost"):
+        try:
+            addr = socket.gethostbyname(host)
+            _check(host, True, addr)
+        except socket.gaierror as e:
+            ok_dns = False
+            _check(host, False, str(e))
+
+    print("== Docker 网络 ==")
+    for net in ("traefik-net", "sandbox-net"):
+        _check(net, _docker_network_exists(net))
+
+    print("== 已发现 stack ==")
+    for svc in discover_services():
+        print(f"  - {svc}")
+
+    ok_all = ok_docker and rc_c == 0 and ok80 and ok_dns
+    return 0 if ok_all else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="stacks.py",
@@ -149,6 +231,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_logs = sub.add_parser("logs", help="跟随单服务日志（--tail 200）")
     p_logs.add_argument("service", metavar="SVC")
     p_logs.set_defaults(func=cmd_logs)
+
+    p_doc = sub.add_parser("doctor", help="环境自检：docker/compose/端口/DNS/网络/stack 清单")
+    p_doc.set_defaults(func=cmd_doctor)
 
     return parser
 

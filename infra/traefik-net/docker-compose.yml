@@ -1,0 +1,21 @@
+####################################################################
+# 反向代理网络（跟 sandbox-net 对称）
+#
+# 单独管理生命周期，避免 traefik / portainer / 业务服务把网络定义
+# 揉进各自 compose，导致停 traefik 时业务网络被顺带销毁。
+####################################################################
+
+networks:
+  traefik-net:
+    name: traefik-net
+    driver: bridge
+    external: false
+
+services:
+  anchor:
+    image: busybox:${BUSYBOX_TAG:-1.37.0}
+    container_name: traefik-net-anchor
+    restart: unless-stopped
+    command: ["sh", "-c", "sleep infinity"]
+    networks:
+      - traefik-net
