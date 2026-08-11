@@ -13,13 +13,15 @@ stacks/
 │   ├── traefik/         # 反向代理 + Dashboard（含 .env 锁定版本）
 │   ├── portainer/       # 容器管理面板（含 .env 锁定版本）
 │   └── sandbox-net/     # 隔离的测试用 bridge 网络（172.30.0.0/16）
-└── services/
-    └── _template/       # 新服务接入模板
+├── services/
+│   └── _template/       # 新服务接入模板
+└── images/              # 自构建镜像（每个子目录一个构建上下文）
+    └── devkit/          # 开发容器镜像定义（Dockerfile），docker run 按需使用，非 compose 服务
 ```
 
 ## 仓库跟踪范围
 
-仓库只跟踪基础设施（`infra/`）与模板（`services/_template/`）。`services/` 下的真实业务服务**不入库**——你在本机按需 `cp services/_template/ services/<name>/` 放进去就行。
+仓库只跟踪基础设施（`infra/`）、模板（`services/_template/`）与自构建镜像（`images/`）。`services/` 下的真实业务服务**不入库**——你在本机按需 `cp services/_template/ services/<name>/` 放进去就行。
 
 `stacks.py` 会自动发现 `infra/*` 与 `services/*`（排除 `_template`）下的 compose 目录，无需手动登记。
 
