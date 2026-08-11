@@ -1,6 +1,6 @@
 # devkit
 
-开发容器镜像定义。基于 `mcr.microsoft.com/devcontainers/base:noble`（已内置 common-utils 基础包 / zsh / Oh My Zsh / `vscode` 用户 uid=1000 + NOPASSWD sudo），增量：Go、Node（nvm LTS）、Rust、uv、clang/cmake/gdb、tmux/rg/fd/bat/fzf 等。apt、PyPI 默认使用 USTC 镜像；Node.js 与 Rust 默认使用 TUNA 镜像。
+开发容器镜像定义。基于 `mcr.microsoft.com/devcontainers/base:noble`（已内置 common-utils 基础包 / zsh / Oh My Zsh / `vscode` 用户 uid=1000 + NOPASSWD sudo），增量：Node（nvm LTS）、Rust、uv、clang/cmake/gdb、tmux/rg/fd/bat/fzf 等。apt、PyPI 默认使用 USTC 镜像；Node.js 与 Rust 默认使用 TUNA 镜像。
 
 ## 构建
 

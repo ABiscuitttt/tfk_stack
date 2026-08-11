@@ -2,18 +2,12 @@
 # 通用开发容器。基于 devcontainers/base:noble，增量安装工具链。
 FROM mcr.microsoft.com/devcontainers/base:noble
 
-ARG GO_VERSION=1.23.4
 ARG NVM_VERSION=v0.40.1
 
 ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
     TZ=Asia/Shanghai \
-    DEBIAN_FRONTEND=noninteractive \
-    TERM=xterm-256color \
-    COLORTERM=truecolor \
-    UV_DEFAULT_INDEX=https://mirrors.ustc.edu.cn/pypi/simple \
-    NVM_NODEJS_ORG_MIRROR=https://mirrors.tuna.tsinghua.edu.cn/nodejs-release/ \
-    RUSTUP_DIST_SERVER=https://mirrors.tuna.tsinghua.edu.cn/rustup
+    DEBIAN_FRONTEND=noninteractive
 
 USER root
 
@@ -53,12 +47,6 @@ RUN apt-get update && apt-get -y install --no-install-recommends \
 RUN ln -s /usr/bin/fdfind /usr/local/bin/fd \
  && ln -s /usr/bin/batcat /usr/local/bin/bat
 
-# Go
-RUN ARCH=$(dpkg --print-architecture) \
- && case "$ARCH" in amd64) GOARCH=amd64 ;; arm64) GOARCH=arm64 ;; *) echo "unsupported arch $ARCH" && exit 1 ;; esac \
- && curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${GOARCH}.tar.gz" | tar -C /usr/local -xz
-ENV PATH=/usr/local/go/bin:${PATH}
-
 # 预建目录并修正权限
 RUN mkdir -p /workspaces /commandhistory \
  && chown vscode:vscode /workspaces /commandhistory
@@ -76,15 +64,22 @@ COPY --chown=vscode:vscode zshrc /home/vscode/.zshrc
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # nvm + Node LTS
-ENV NVM_DIR=/home/vscode/.nvm
+ENV NVM_DIR=/home/vscode/.nvm \
+    NVM_NODEJS_ORG_MIRROR=https://mirrors.tuna.tsinghua.edu.cn/nodejs-release/
 RUN mkdir -p $NVM_DIR \
  && curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash \
  && bash -lc '. "$NVM_DIR/nvm.sh" && nvm install --lts && nvm alias default lts/*'
 
 # Rust
+ENV RUSTUP_DIST_SERVER=https://mirrors.tuna.tsinghua.edu.cn/rustup
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
     | sh -s -- -y --default-toolchain stable --profile default --no-modify-path
 ENV PATH=/home/vscode/.cargo/bin:${PATH}
+
+# 运行时变量（放在最后，避免影响构建缓存）
+ENV TERM=xterm-256color \
+    COLORTERM=truecolor \
+    UV_DEFAULT_INDEX=https://mirrors.ustc.edu.cn/pypi/simple
 
 WORKDIR /workspaces
 CMD ["zsh", "-l"]
