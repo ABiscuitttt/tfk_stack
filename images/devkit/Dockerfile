@@ -43,7 +43,7 @@ RUN apt-get update && apt-get -y install --no-install-recommends \
     && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/*
 
-# fd/bat 命令名在 Ubuntu 中不同，建软链
+# fd/bat 命令软链
 RUN ln -s /usr/bin/fdfind /usr/local/bin/fd \
  && ln -s /usr/bin/batcat /usr/local/bin/bat
 
@@ -76,7 +76,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
     | sh -s -- -y --default-toolchain stable --profile default --no-modify-path
 ENV PATH=/home/vscode/.cargo/bin:${PATH}
 
-# 运行时变量（放在最后，避免影响构建缓存）
+# 运行时变量
 ENV TERM=xterm-256color \
     COLORTERM=truecolor \
     UV_DEFAULT_INDEX=https://mirrors.ustc.edu.cn/pypi/simple
