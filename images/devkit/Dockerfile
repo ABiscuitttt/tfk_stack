@@ -12,7 +12,8 @@ ENV LANG=C.UTF-8 \
     TERM=xterm-256color \
     COLORTERM=truecolor \
     UV_DEFAULT_INDEX=https://mirrors.ustc.edu.cn/pypi/simple \
-    NVM_NODEJS_ORG_MIRROR=https://mirrors.tuna.tsinghua.edu.cn/nodejs-release/
+    NVM_NODEJS_ORG_MIRROR=https://mirrors.tuna.tsinghua.edu.cn/nodejs-release/ \
+    RUSTUP_DIST_SERVER=https://mirrors.tuna.tsinghua.edu.cn/rustup
 
 USER root
 
