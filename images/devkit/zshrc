@@ -137,12 +137,6 @@ command -v uv     >/dev/null && eval "$(uv generate-shell-completion zsh)"
 command -v uvx    >/dev/null && eval "$(uvx --generate-shell-completion zsh)"
 command -v docker >/dev/null && eval "$(docker completion zsh)"
 
-# kitty kittens (aliases harmless if kitten not present)
-alias s='kitten ssh'
-alias icat='kitten icat'
-alias kdiff='kitten diff'
-alias krg='kitten hyperlinked_grep'
-
 # --- devkit additions ---
 zstyle ':omz:update' mode disabled
 export HISTFILE=/commandhistory/.zsh_history
